@@ -5,6 +5,7 @@ provider "aws" {
 resource "aws_security_group" "allow_ssh" {
   name        = "allow_ssh"
   description = "Allow SSH from anywhere"
+  vpc_id      = "vpc-06df8668595225547"
 
   ingress {
     from_port   = 22
@@ -22,9 +23,11 @@ resource "aws_security_group" "allow_ssh" {
 }
 
 resource "aws_instance" "my_ec2" {
-  ami                    = "ami-03c156cf4a6b389e6" # Ubuntu 22.04 LTS Mumbai
-  instance_type          = "t2.micro"
-  vpc_security_group_ids = [aws_security_group.allow_ssh.id]
+  ami                         = "ami-03c156cf4a6b389e6" # Ubuntu 22.04 LTS Mumbai
+  instance_type               = "t2.micro"
+  subnet_id                   = "subnet-003ca11fb68d5d490"
+  vpc_security_group_ids      = [aws_security_group.allow_ssh.id]
+  associate_public_ip_address = true
 
   tags = {
     Name = "MySimpleEC2"
