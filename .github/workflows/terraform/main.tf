@@ -38,15 +38,15 @@ resource "aws_instance" "flask_docker" {
   vpc_security_group_ids = [aws_security_group.allow_http_ssh.id]
 
   user_data = <<-EOF
-    #!/bin/bash
-    apt-get update
-    apt-get install -y docker.io
-    systemctl start docker
-    systemctl enable docker
+              #!/bin/bash
+              apt-get update
+              apt-get install -y docker.io
+              systemctl start docker
+              systemctl enable docker
 
-    docker run -d --name flask-app -p 5000:5000 tiangolo/uwsgi-nginx-flask:python3.8 \
-      bash -c "echo 'from flask import Flask; app = Flask(__name__); @app.route(\"/\")\\ndef home(): return \\\"Hello from Flask on EC2!\\\"; if __name__ == \\\"__main__\\\": app.run(host=\\\"0.0.0.0\\\")' > /app/main.py && python /app/main.py"
-  EOF
+              docker run -d --name flask-app -p 5000:5000 tiangolo/uwsgi-nginx-flask:python3.8 \
+                bash -c "echo 'from flask import Flask; app = Flask(__name__); @app.route(\"/\")\\ndef home(): return \\\"Hello from Flask on EC2!\\\"; if __name__ == \\\"__main__\\\": app.run(host=\\\"0.0.0.0\\\")' > /app/main.py && python /app/main.py"
+            EOF
 
   tags = {
     Name = "FlaskDockerEC2"
