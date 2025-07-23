@@ -1,10 +1,6 @@
+
 provider "aws" {
   region = "ap-south-1"
-}
-
-resource "aws_key_pair" "deployer" {
-  key_name   = "Teraform-GitHub-key"
-  public_key = file("${path.module}/Teraform+GitHub.pub")
 }
 
 resource "aws_security_group" "allow_http_ssh" {
@@ -35,10 +31,8 @@ resource "aws_security_group" "allow_http_ssh" {
   }
 }
 
-resource "aws_instance" "flask_docker" {
   ami           = "ami-03c156cf4a6b389e6" # Ubuntu 22.04 LTS Mumbai
   instance_type = "t2.micro"
-  key_name      = aws_key_pair.deployer.key_name
   vpc_security_group_ids = [aws_security_group.allow_http_ssh.id]
 
   user_data = <<-EOF
