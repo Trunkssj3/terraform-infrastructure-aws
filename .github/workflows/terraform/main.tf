@@ -31,7 +31,6 @@ resource "aws_security_group" "allow_http_ssh" {
   }
 }
 
-
 resource "aws_instance" "flask_docker" {
   ami                    = "ami-03c156cf4a6b389e6" # Ubuntu 22.04 LTS Mumbai
   instance_type          = "t2.micro"
