@@ -1,47 +1,63 @@
-name: CICD
+provider "aws" {
+  region = "ap-south-1"
+}
 
-on:
-  workflow_dispatch:
-    inputs:
-      action:
-        description: "Terraform action"
-        required: true
-        default: "plan"
-        type: choice
-        options:
-          - plan
-          - apply
-          - destroy
+resource "aws_key_pair" "deployer" {
+  key_name   = "Teraform-GitHub-key"
+  public_key = file("${path.module}/Teraform+GitHub.pub")
+}
 
-jobs:
-  terraform:
-    runs-on: self-hosted
+resource "aws_security_group" "allow_http_ssh" {
+  name        = "allow_http_ssh"
+  description = "Allow HTTP, SSH and Flask (port 5000)"
 
-    env:
-      AWS_REGION: ap-south-1
-      AWS_DEFAULT_REGION: ap-south-1
-      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  ingress {
+    description = "SSH"
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
 
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
+  ingress {
+    description = "Flask App"
+    from_port   = 5000
+    to_port     = 5000
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
 
-      - name: Terraform Init
-        run: terraform init
-        working-directory: terraform
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+}
 
-      - name: Terraform Plan
-        if: ${{ github.event.inputs.action == 'plan' }}
-        run: terraform plan
-        working-directory: terraform
+resource "aws_instance" "flask_docker" {
+  ami           = "ami-03c156cf4a6b389e6" # Ubuntu 22.04 LTS Mumbai
+  instance_type = "t2.micro"
+  key_name      = aws_key_pair.deployer.key_name
+  vpc_security_group_ids = [aws_security_group.allow_http_ssh.id]
 
-      - name: Terraform Apply
-        if: ${{ github.event.inputs.action == 'apply' }}
-        run: terraform apply -auto-approve
-        working-directory: terraform
+  user_data = <<-EOF
+              #!/bin/bash
+              apt-get update
+              apt-get install -y docker.io
+              systemctl start docker
+              systemctl enable docker
 
-      - name: Terraform Destroy
-        if: ${{ github.event.inputs.action == 'destroy' }}
-        run: terraform destroy -auto-approve
-        working-directory: terraform
+              docker run -d --name flask-app -p 5000:5000 tiangolo/uwsgi-nginx-flask:python3.8 \
+                bash -c "echo 'from flask import Flask; app = Flask(__name__); @app.route(\"/\")\\ndef home(): return \\\"Hello from Flask on EC2!\\\"; if __name__ == \\\"__main__\\\": app.run(host=\\\"0.0.0.0\\\")' > /app/main.py && python /app/main.py"
+            EOF
+
+  tags = {
+    Name = "FlaskDockerEC2"
+  }
+}
+
+output "ec2_public_ip" {
+  value       = aws_instance.flask_docker.public_ip
+  description = "The public IP of the EC2 instance"
+}
