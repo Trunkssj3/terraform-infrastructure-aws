@@ -1,15 +1,28 @@
+terraform {
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 4.0"
+    }
+  }
+}
+
+provider "aws" {
+  region = "ap-south-1"  
+}
+
 # Instance Security Group
 resource "aws_security_group" "instance_sg" {
   name        = "allow_ssh"
   description = "Allow SSH connections from outside"
   vpc_id      = aws_vpc.main.id
-#
+  #
   ingress {
     description = "SSH from anywhere"
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]  
+    cidr_blocks = ["0.0.0.0/0"]
   }
 
   egress {
@@ -48,12 +61,12 @@ resource "aws_security_group" "alb_sg" {
 }
 
 resource "aws_instance" "web_1" {
-  ami           = "ami-053b12d3152c0cc71"  
+  ami           = "ami-053b12d3152c0cc71"
   instance_type = "t3a.micro"
   subnet_id     = aws_subnet.public_1.id
 
   vpc_security_group_ids = [aws_security_group.instance_sg.id]
-  
+
   user_data = <<-EOF
               #!/bin/bash
               sudo apt-get update -y
@@ -71,12 +84,12 @@ resource "aws_instance" "web_1" {
 }
 
 resource "aws_instance" "web_2" {
-  ami           = "ami-053b12d3152c0cc71"  # Ubuntu 22.04 AMI ID
+  ami           = "ami-053b12d3152c0cc71" # Ubuntu 22.04 AMI ID
   instance_type = "t3a.micro"
   subnet_id     = aws_subnet.public_2.id
 
   vpc_security_group_ids = [aws_security_group.instance_sg.id]
-  
+
   user_data = <<-EOF
               #!/bin/bash
               sudo apt-get update -y
