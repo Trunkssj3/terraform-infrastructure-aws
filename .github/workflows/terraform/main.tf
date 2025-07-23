@@ -74,3 +74,4 @@ resource "aws_instance" "docker_static_site" {
 
   tags = { Name = "docker-nginx-demo" }
 }
+#
