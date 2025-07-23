@@ -1,7 +1,7 @@
 provider "aws" {
   region = "ap-south-1"
 }
-
+#
 resource "aws_security_group" "allow_http_ssh" {
   name        = "allow_http_ssh"
   description = "Allow HTTP, SSH and Flask (port 5000)"
