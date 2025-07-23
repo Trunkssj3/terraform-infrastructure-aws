@@ -3,7 +3,7 @@ resource "aws_security_group" "instance_sg" {
   name        = "allow_ssh"
   description = "Allow SSH connections from outside"
   vpc_id      = aws_vpc.main.id
-
+#
   ingress {
     description = "SSH from anywhere"
     from_port   = 22
